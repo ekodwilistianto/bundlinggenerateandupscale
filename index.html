@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bundling Tools AI Generator & Upscaler</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        display: ['Space Grotesk', 'sans-serif'],
+                        body: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        bg: '#050505', /* Dark/Black theme background */
+                        'bg-elevated': '#111111',
+                        fg: '#ffffff', /* White text for readability */
+                        muted: '#9ca3af', /* Gray 400 */
+                        accent: '#3b82f6', /* Blue 500 */
+                        'accent-glow': '#60a5fa',
+                        card: 'rgba(255, 255, 255, 0.03)',
+                        border: 'rgba(255, 255, 255, 0.1)',
+                        indigo: {
+                            deep: '#1e3a8a',
+                            glow: '#2563eb',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            background-color: #050505;
+            color: #ffffff;
+        }
+        
+        /* Glassmorphism Base (Dark Theme) */
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .glass-intense {
+            background: rgba(20, 20, 20, 0.7);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+        }
+        
+        /* Holographic Effect */
+        .holographic {
+            background: linear-gradient(
+                135deg,
+                rgba(59, 130, 246, 0.05) 0%,
+                rgba(255, 255, 255, 0.02) 50%,
+                rgba(37, 99, 235, 0.05) 100%
+            );
+            position: relative;
+        }
+        
+        .holographic::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                45deg,
+                transparent 30%,
+                rgba(59, 130, 246, 0.1) 50%,
+                transparent 70%
+            );
+            animation: shimmer 4s ease-in-out infinite;
+        }
+        
+        @keyframes shimmer {
+            0%, 100% { transform: translateX(-100%); }
+            50% { transform: translateX(100%); }
+        }
+        
+        /* Floating Orbs Background (Blue & White) */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0.4;
+            pointer-events: none;
+        }
+        
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.4), transparent);
+            top: -100px;
+            right: -150px;
+            animation: float1 15s ease-in-out infinite;
+        }
+        
+        .orb-2 {
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.15), transparent);
+            bottom: 20%;
+            left: -100px;
+            animation: float2 18s ease-in-out infinite;
+        }
+        
+        .orb-3 {
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(37, 99, 235, 0.3), transparent);
+            top: 50%;
+            right: -80px;
+            animation: float3 20s ease-in-out infinite;
+        }
+        
+        @keyframes float1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-30px, 50px) scale(1.1); }
+        }
+        
+        @keyframes float2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(40px, -30px) scale(1.05); }
+        }
+        
+        @keyframes float3 {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-20px, 40px); }
+        }
+        
+        /* Grid Pattern Overlay */
+        .grid-pattern {
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+        
+        /* CTA Button */
+        .cta-btn {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: #ffffff !important;
+            font-weight: 700;
+            text-decoration: none !important;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(96, 165, 250, 0.3);
+        }
+        
+        .cta-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%);
+            transform: translateX(-100%);
+            transition: transform 0.5s ease;
+        }
+        
+        .cta-btn:hover::before {
+            transform: translateX(100%);
+        }
+        
+        .cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+        }
+        
+        .cta-btn:active {
+            transform: translateY(0);
+        }
+        
+        /* Secondary Button */
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff !important;
+            text-decoration: none !important;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Sticky CTA Mobile */
+        .sticky-cta {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 999;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .sticky-cta.visible {
+            transform: translateY(0);
+        }
+        
+        @media (min-width: 768px) {
+            .sticky-cta {
+                display: none;
+            }
+        }
+        
+        /* Reveal Animation */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Stagger delays */
+        .delay-100 { transition-delay: 0.1s; }
+        .delay-200 { transition-delay: 0.2s; }
+        .delay-300 { transition-delay: 0.3s; }
+        .delay-400 { transition-delay: 0.4s; }
+        
+        /* Price Strike */
+        .price-strike {
+            position: relative;
+            display: inline-block;
+            color: #6b7280;
+        }
+        
+        .price-strike::after {
+            content: '';
+            position: absolute;
+            left: -5%;
+            top: 50%;
+            width: 110%;
+            height: 2px;
+            background: #ef4444;
+            transform: rotate(-8deg);
+        }
+        
+        /* Countdown Box */
+        .countdown-box {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.5);
+        }
+        
+        /* Feature Card Hover */
+        .feature-card {
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 10px 30px -5px rgba(59, 130, 246, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #050505;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #374151;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3b82f6;
+        }
+        
+        /* 3D Text Effect (Blue on Dark Theme) */
+        .text-3d {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: -1px;
+            text-shadow: 
+                0 1px 0 #1d4ed8,
+                0 2px 0 #1e40af,
+                0 3px 0 #1e3a8a,
+                0 4px 0 #172554,
+                0 5px 0 #0f172a,
+                0 6px 15px rgba(0,0,0,0.5),
+                0 15px 25px rgba(0,0,0,0.7),
+                0 0 30px rgba(59, 130, 246, 0.6);
+            transition: transform 0.3s ease, text-shadow 0.3s ease;
+            display: inline-block;
+            transform: perspective(600px) rotateX(10deg);
+        }
+
+        .text-3d:hover {
+            transform: perspective(600px) rotateX(10deg) translateY(-5px);
+            text-shadow: 
+                0 1px 0 #2563eb,
+                0 2px 0 #1d4ed8,
+                0 3px 0 #1e40af,
+                0 4px 0 #1e3a8a,
+                0 5px 0 #172554,
+                0 6px 0 #020617,
+                0 10px 20px rgba(0,0,0,0.6),
+                0 20px 35px rgba(0,0,0,0.8),
+                0 0 50px rgba(59, 130, 246, 0.8);
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <!-- Background Elements -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+        <div class="absolute inset-0 grid-pattern"></div>
+    </div>
+    
+    <!-- Main Content -->
+    <main class="relative w-full min-h-screen">
+        
+        <!-- HERO SECTION -->
+        <section class="w-full py-12 px-4 md:py-20 md:px-6">
+            <div class="max-w-4xl mx-auto text-center">
+                <!-- Badge -->
+                <div class="reveal inline-flex items-center gap-2 glass px-4 py-2 rounded-full mb-6 border-blue-500/30">
+                    <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-[0_0_10px_#3b82f6]"></span>
+                    <span class="text-sm text-gray-300 font-medium">Paket Super Hemat</span>
+                </div>
+                
+                <!-- Headline -->
+                <div class="reveal delay-100 mb-6 relative z-10">
+                    <h1 class="text-3d text-4xl md:text-5xl lg:text-[4.5rem] uppercase leading-tight">
+                        BUNDLING AI GENERATOR<br>& UPSCALER
+                    </h1>
+                </div>
+                
+                <h2 class="reveal delay-150 font-display text-2xl md:text-3xl font-bold leading-tight mb-6 text-white">
+                    Bangun Aset Visual Tanpa Batas,<br>
+                    <span class="bg-gradient-to-r from-blue-400 to-white bg-clip-text text-transparent">
+                        Dengan Kualitas Maksimal!
+                    </span>
+                </h2>
+                
+                <!-- Subheadline -->
+                <p class="reveal delay-200 text-lg text-gray-400 mb-8 max-w-2xl mx-auto leading-relaxed">
+                    Kombinasi mematikan untuk kreator: Tools pembuat Video & Gambar AI Tanpa Batas dipadukan dengan AI Video Upscaler kelas pro. Buat, perbesar kualitas, dan hasilkan cuan.
+                </p>
+                
+                <!-- Hero CTA -->
+                <div class="reveal delay-300 flex flex-col sm:flex-row gap-4 justify-center items-center mb-10">
+                    <a href="#pricing" class="cta-btn px-8 py-4 rounded-xl text-lg font-display w-full sm:w-auto text-center">
+                        Ambil Bundling Sekarang
+                    </a>
+                    <a href="#contents" class="btn-secondary px-6 py-4 rounded-xl w-full sm:w-auto text-center font-medium">
+                        Lihat Isi Produk
+                    </a>
+                </div>
+            </div>
+        </section>
+        
+        <!-- THE SOLUTION - 3 REASON WHY -->
+        <section class="w-full py-14 px-4 md:px-6 relative">
+            <div class="absolute inset-0 holographic"></div>
+            <div class="relative max-w-2xl mx-auto">
+                <div class="reveal text-center mb-12">
+                    <span class="inline-block text-blue-400 font-display font-semibold text-sm tracking-wider uppercase mb-3">Keuntungan Utama</span>
+                    <h2 class="font-display text-3xl md:text-4xl font-bold mb-4 text-white">
+                        Kenapa Harus Ambil Paket Ini?
+                    </h2>
+                    <p class="text-gray-400 max-w-lg mx-auto">Dirancang untuk mendominasi pasar microstock & konten kreator dengan teknologi AI terkini.</p>
+                </div>
+                
+                <!-- Reason 1 -->
+                <div class="reveal delay-100 glass-intense rounded-3xl p-6 md:p-8 mb-6">
+                    <div class="flex items-start gap-4 mb-5">
+                        <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-800 flex items-center justify-center shadow-lg shadow-blue-500/20 border border-blue-400/30">
+                            <span class="font-display font-bold text-2xl text-white">1</span>
+                        </div>
+                        <div>
+                            <h3 class="font-display text-xl md:text-2xl font-bold mb-1 text-white">Generate Tanpa Batas</h3>
+                            <p class="text-blue-400 text-sm font-medium">Hanya dengan satu klik</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-400 leading-relaxed mb-5">
+                        Lupakan limit generasi atau biaya bulanan yang mahal. Hasilkan ribuan gambar dan video AI sesuai *prompt* Anda secara otomatis dan tanpa henti.
+                    </p>
+                </div>
+                
+                <!-- Reason 2 -->
+                <div class="reveal delay-200 glass-intense rounded-3xl p-6 md:p-8 mb-6">
+                    <div class="flex items-start gap-4 mb-5">
+                        <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-white to-gray-400 flex items-center justify-center shadow-lg shadow-white/10 border border-white/30 text-black">
+                            <span class="font-display font-bold text-2xl">2</span>
+                        </div>
+                        <div>
+                            <h3 class="font-display text-xl md:text-2xl font-bold mb-1 text-white">Kualitas Resolusi Sultan</h3>
+                            <p class="text-blue-400 text-sm font-medium">Upscale Video AI ke 4K/8K</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-400 leading-relaxed mb-5">
+                        Hasil *generate* AI sering pecah? Dengan EkoVid Pro, poles aset video Anda menjadi sangat tajam, jernih, dan siap dijual dengan harga tinggi di Microstock.
+                    </p>
+                </div>
+                
+                <!-- Reason 3 -->
+                <div class="reveal delay-300 glass-intense rounded-3xl p-6 md:p-8">
+                    <div class="flex items-start gap-4 mb-5">
+                        <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-black flex items-center justify-center shadow-lg shadow-blue-900/50 border border-blue-500/30">
+                            <span class="font-display font-bold text-2xl text-white">3</span>
+                        </div>
+                        <div>
+                            <h3 class="font-display text-xl md:text-2xl font-bold mb-1 text-white">Harga Super Hemat</h3>
+                            <p class="text-blue-400 text-sm font-medium">Lebih murah beli paket</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-400 leading-relaxed mb-5">
+                        Jika dibeli terpisah, kedua tools canggih ini bernilai total <strong class="text-white">Rp 610.000</strong>. Khusus di halaman ini, Anda mendapatkan semuanya dengan harga bundling yang jauh lebih terjangkau.
+                    </p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- PRODUCT CONTENTS -->
+        <section id="contents" class="w-full py-14 px-4 md:px-6">
+            <div class="max-w-4xl mx-auto">
+                <div class="reveal text-center mb-12">
+                    <h2 class="font-display text-2xl md:text-3xl font-bold mb-3 text-white">Isi Paket Bundling AI</h2>
+                    <p class="text-gray-400">Klik "Lihat Detail" untuk membaca spesifikasi lengkap dan demo tiap produk.</p>
+                </div>
+                
+                <div class="reveal grid grid-cols-1 md:grid-cols-2 gap-5">
+                    
+                    <!-- Item 1: Meta AI Automator -->
+                    <div class="feature-card glass rounded-2xl p-6 flex flex-col h-full relative group border-blue-500/20">
+                        <div class="flex items-start gap-4 mb-4">
+                            <div class="w-14 h-14 rounded-xl bg-blue-900/30 flex items-center justify-center flex-shrink-0 border border-blue-500/30">
+                                <svg class="w-7 h-7 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                            </div>
+                            <div class="flex-1">
+                                <span class="inline-block px-2 py-1 bg-white/10 rounded text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-2 border border-white/5">AI GENERATOR</span>
+                                <h4 class="font-display font-bold text-white text-lg leading-snug group-hover:text-blue-400 transition-colors">Tools Buat Video & Gambar AI Tanpa Batas</h4>
+                            </div>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-6 leading-relaxed flex-grow">
+                            Tools sakti untuk menghasilkan karya gambar maupun video AI secara *unlimited* hanya dengan satu kali klik pengaturan. Solusi untuk stok ribuan aset!
+                        </p>
+                        <div class="flex items-center justify-between mt-auto pt-4 border-t border-white/10">
+                            <div class="font-bold text-white">Rp 255.000</div>
+                            <a href="https://ekodwilistianto.github.io/metaiaautomator/" target="_blank" class="text-sm font-semibold text-blue-400 hover:text-white flex items-center gap-1 transition-colors">
+                                Lihat Detail 
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Item 2: EkoVid Pro Upscaler -->
+                    <div class="feature-card glass rounded-2xl p-6 flex flex-col h-full relative group border-blue-500/20">
+                        <div class="flex items-start gap-4 mb-4">
+                            <div class="w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0 border border-white/20">
+                                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            </div>
+                            <div class="flex-1">
+                                <span class="inline-block px-2 py-1 bg-white/10 rounded text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-2 border border-white/5">AI UPSCALER</span>
+                                <h4 class="font-display font-bold text-white text-lg leading-snug group-hover:text-blue-400 transition-colors">Tools EkoVid Pro - AI Video Upscaler</h4>
+                            </div>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-6 leading-relaxed flex-grow">
+                            Perbesar resolusi video AI (upscale), perbaiki detail frame yang buram, dan tingkatkan FPS agar mulus dengan kekuatan Artificial Intelligence kelas desktop.
+                        </p>
+                        <div class="flex items-center justify-between mt-auto pt-4 border-t border-white/10">
+                            <div class="font-bold text-white">Rp 355.000</div>
+                            <a href="https://ekodwilistianto.github.io/ekovidpro/" target="_blank" class="text-sm font-semibold text-blue-400 hover:text-white flex items-center gap-1 transition-colors">
+                                Lihat Detail 
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+        
+        <!-- OBJECTION HANDLING -->
+        <section class="w-full py-14 px-4 md:px-6">
+            <div class="max-w-2xl mx-auto">
+                <div class="reveal text-center mb-10">
+                    <h2 class="font-display text-2xl md:text-3xl font-bold mb-3 text-white">Masih Ada Keraguan?</h2>
+                    <p class="text-gray-400">Mari kita bahas hal-hal yang sering ditanyakan sebelum membeli.</p>
+                </div>
+                
+                <!-- FAQ Items -->
+                <div class="space-y-4">
+                    <div class="reveal delay-100 glass rounded-2xl overflow-hidden">
+                        <button class="faq-toggle w-full text-left p-5 flex items-start gap-4 focus:outline-none" aria-expanded="false">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-900/40 flex items-center justify-center border border-blue-500/20">
+                                <span class="font-display font-bold text-blue-400">1</span>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-white mb-1">"Apakah butuh spesifikasi PC yang tinggi?"</h4>
+                                <p class="text-sm text-gray-500">Klik untuk lihat jawaban</p>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-400 transform transition-transform flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="faq-content hidden px-5 pb-5">
+                            <div class="p-4 rounded-xl bg-black/50 border border-white/5 ml-12">
+                                <p class="text-sm text-gray-300 leading-relaxed mb-3">
+                                    Untuk <strong class="text-white">Tools Generator AI</strong>, sistemnya sangat ringan karena berjalan melalui browser. Tidak perlu PC super canggih!
+                                </p>
+                                <p class="text-sm text-gray-300 leading-relaxed">
+                                    Sedangkan untuk <strong class="text-white">EkoVid Pro (Upscaler)</strong>, ini adalah software desktop. Meski menggunakan AI, software ini dirancang agar tetap bisa berjalan optimal pada PC standar dengan syarat OS Windows 10/11. 
+                                    <a href="https://ekodwilistianto.github.io/ekovidpro/" target="_blank" class="text-blue-400 hover:text-blue-300 underline font-medium transition-colors">Lihat detail spesifikasi sistem selengkapnya disini.</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="reveal delay-200 glass rounded-2xl overflow-hidden">
+                        <button class="faq-toggle w-full text-left p-5 flex items-start gap-4 focus:outline-none" aria-expanded="false">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-900/40 flex items-center justify-center border border-blue-500/20">
+                                <span class="font-display font-bold text-blue-400">2</span>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-white mb-1">"Apakah hasil videonya bisa dijual ke Microstock?"</h4>
+                                <p class="text-sm text-gray-500">Klik untuk lihat jawaban</p>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-400 transform transition-transform flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="faq-content hidden px-5 pb-5">
+                            <div class="p-4 rounded-xl bg-black/50 border border-white/5 ml-12">
+                                <p class="text-sm text-gray-300 leading-relaxed mb-3">
+                                    Sangat bisa! Justru itulah tujuan dari bundling ini. Anda menghasilkan raw material (gambar/video) dengan *Automator*, lalu memperjelas kualitas resolusinya dengan *Upscaler*.
+                                </p>
+                                <p class="text-sm text-gray-300 leading-relaxed">
+                                    Karya AI beresolusi tajam (4K) memiliki tingkat *approval* yang jauh lebih tinggi di agensi microstock teratas seperti Adobe Stock atau Vecteezy.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- PRICING SECTION -->
+        <section id="pricing" class="w-full py-14 px-4 md:px-6 relative">
+            <div class="absolute inset-0 holographic"></div>
+            <div class="relative max-w-2xl mx-auto">
+                <!-- Countdown Timer -->
+                <div class="reveal text-center mb-8">
+                    <div class="inline-block glass-intense rounded-2xl p-4">
+                        <p class="text-sm text-gray-400 mb-3">Promo bundling berakhir dalam:</p>
+                        <div class="flex justify-center gap-3" id="countdown">
+                            <div class="countdown-box rounded-xl px-4 py-2 text-center min-w-[60px] bg-black">
+                                <div class="font-display text-2xl font-bold text-white" id="hours">23</div>
+                                <div class="text-xs text-blue-400 font-medium">Jam</div>
+                            </div>
+                            <div class="countdown-box rounded-xl px-4 py-2 text-center min-w-[60px] bg-black">
+                                <div class="font-display text-2xl font-bold text-white" id="minutes">59</div>
+                                <div class="text-xs text-blue-400 font-medium">Menit</div>
+                            </div>
+                            <div class="countdown-box rounded-xl px-4 py-2 text-center min-w-[60px] bg-black">
+                                <div class="font-display text-2xl font-bold text-white" id="seconds">59</div>
+                                <div class="text-xs text-blue-400 font-medium">Detik</div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-3 font-medium">Kesempatan Terbatas</p>
+                    </div>
+                </div>
+                
+                <!-- Pricing Card -->
+                <div class="reveal delay-100 glass-intense rounded-3xl p-6 md:p-8 text-center border-t-4 border-t-blue-500 shadow-[0_0_30px_rgba(59,130,246,0.15)]">
+                    <!-- Badge -->
+                    <div class="inline-flex items-center gap-2 bg-blue-900/30 px-4 py-2 rounded-full mb-6 border border-blue-500/20">
+                        <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        <span class="text-sm font-bold text-blue-400">Combo Creator AI</span>
+                    </div>
+                    
+                    <!-- Title -->
+                    <h3 class="font-display text-2xl md:text-3xl font-bold text-white mb-2">Bundling AI Generator + Upscaler</h3>
+                    <p class="text-gray-400 mb-6">Investasi Cerdas untuk Konten Kreator & Stocker</p>
+                    
+                    <!-- Price -->
+                    <div class="mb-6">
+                        <div class="flex items-center justify-center gap-3 mb-2">
+                            <span class="price-strike text-xl font-semibold">Rp 610.000</span>
+                            <span class="bg-red-500/20 text-red-400 text-xs font-bold px-2 py-1 rounded border border-red-500/20">DISKON SPESIAL</span>
+                        </div>
+                        <div class="font-display text-4xl md:text-5xl font-black">
+                            <span class="text-white">Rp 455.000</span>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-2 font-medium">Sekali bayar, akses selamanya</p>
+                    </div>
+                    
+                    <!-- CTA -->
+                    <a href="https://ekodwilistianto.com/ekodwi.id/w0ezwovq7g6p/checkout?token=cGFyYW1zPSU1QiU1RCZiaWRfcHJpY2U9MCZxdHlfcHJvZD0xJnNlc3NpZD0mdG90YWxfcHJpY2U9JnRvdGFsX3VuaXQ9" target="_blank" class="cta-btn block w-full py-4 rounded-xl text-lg font-display mb-4">
+                        Ambil Bundling Sekarang
+                    </a>
+                    
+                    <!-- Trust Micro-copy -->
+                    <div class="flex items-center justify-center gap-4 text-xs font-medium text-gray-400">
+                        <div class="flex items-center gap-1">
+                            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                            </svg>
+                            <span>Pembayaran Aman</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                            <span>Akses Instan</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- FINAL CTA -->
+        <section class="w-full py-14 px-4 md:px-6">
+            <div class="max-w-2xl mx-auto text-center">
+                <div class="reveal">
+                    <h2 class="font-display text-2xl md:text-3xl font-bold text-white mb-4">
+                        Siap Membangun Mesin Pencetak Aset AI Anda?
+                    </h2>
+                    <p class="text-gray-400 mb-6 max-w-lg mx-auto">
+                        Jangan biarkan karya AI Anda ditolak karena kualitas yang buruk atau jumlahnya yang sedikit. Skalakan portofolio Anda hari ini juga!
+                    </p>
+                    <a href="https://ekodwilistianto.com/ekodwi.id/w0ezwovq7g6p/checkout?token=cGFyYW1zPSU1QiU1RCZiaWRfcHJpY2U9MCZxdHlfcHJvZD0xJnNlc3NpZD0mdG90YWxfcHJpY2U9JnRvdGFsX3VuaXQ9" target="_blank" class="cta-btn inline-block px-8 py-4 rounded-xl text-lg font-display">
+                        Checkout Bundling Disini
+                    </a>
+                </div>
+            </div>
+        </section>
+        
+        <!-- COPYRIGHT -->
+        <div class="w-full py-8 px-4 text-center border-t border-white/10 mt-10">
+            <p class="text-xs font-medium text-gray-500">© 2026 Bundling AI Generator & Upscaler. All rights reserved.</p>
+        </div>
+    </main>
+    
+    <!-- STICKY CTA MOBILE -->
+    <div class="sticky-cta glass-intense p-4 md:hidden border-t border-white/10" id="stickyCta">
+        <div class="flex items-center justify-between gap-3">
+            <div>
+                <div class="text-xs text-gray-400 font-medium">Harga Bundling</div>
+                <div class="font-display font-bold text-white text-lg">Rp 455.000</div>
+            </div>
+            <a href="https://ekodwilistianto.com/ekodwi.id/w0ezwovq7g6p/checkout?token=cGFyYW1zPSU1QiU1RCZiaWRfcHJpY2U9MCZxdHlfcHJvZD0xJnNlc3NpZD0mdG90YWxfcHJpY2U9JnRvdGFsX3VuaXQ9" target="_blank" class="cta-btn px-6 py-3 rounded-xl font-display text-sm">
+                Beli Sekarang
+            </a>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize variables first
+        let hours = 23;
+        let minutes = 59;
+        let seconds = 59;
+        
+        // DOM Elements
+        const hoursEl = document.getElementById('hours');
+        const minutesEl = document.getElementById('minutes');
+        const secondsEl = document.getElementById('seconds');
+        const stickyCta = document.getElementById('stickyCta');
+        
+        // Countdown Timer
+        function updateCountdown() {
+            seconds--;
+            if (seconds < 0) {
+                seconds = 59;
+                minutes--;
+                if (minutes < 0) {
+                    minutes = 59;
+                    hours--;
+                    if (hours < 0) {
+                        hours = 23;
+                        minutes = 59;
+                        seconds = 59;
+                    }
+                }
+            }
+            
+            if (hoursEl) hoursEl.textContent = String(hours).padStart(2, '0');
+            if (minutesEl) minutesEl.textContent = String(minutes).padStart(2, '0');
+            if (secondsEl) secondsEl.textContent = String(seconds).padStart(2, '0');
+        }
+        
+        // Start countdown
+        setInterval(updateCountdown, 1000);
+        
+        // Scroll Reveal
+        const revealElements = document.querySelectorAll('.reveal');
+        
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        });
+        
+        revealElements.forEach(el => revealObserver.observe(el));
+        
+        // Sticky CTA on Scroll
+        let lastScroll = 0;
+        
+        function handleScroll() {
+            const currentScroll = window.pageYOffset;
+            
+            if (stickyCta) {
+                if (currentScroll > 500) {
+                    stickyCta.classList.add('visible');
+                } else {
+                    stickyCta.classList.remove('visible');
+                }
+            }
+            
+            lastScroll = currentScroll;
+        }
+        
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        
+        // FAQ Toggle
+        const faqToggles = document.querySelectorAll('.faq-toggle');
+        
+        faqToggles.forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                const content = this.nextElementSibling;
+                const icon = this.querySelector('svg:last-child');
+                const isOpen = content.classList.contains('hidden') === false;
+                
+                // Close all others
+                document.querySelectorAll('.faq-content').forEach(c => {
+                    c.classList.add('hidden');
+                });
+                document.querySelectorAll('.faq-toggle svg:last-child').forEach(i => {
+                    i.style.transform = 'rotate(0deg)';
+                });
+                
+                // Toggle current
+                if (!isOpen) {
+                    content.classList.remove('hidden');
+                    if (icon) icon.style.transform = 'rotate(180deg)';
+                    this.setAttribute('aria-expanded', 'true');
+                } else {
+                    this.setAttribute('aria-expanded', 'false');
+                }
+            });
+        });
+        
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+        
+        // Reduced motion check
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+        
+        if (prefersReducedMotion.matches) {
+            document.querySelectorAll('.orb').forEach(orb => {
+                orb.style.animation = 'none';
+            });
+        }
+    </script>
+</body>
+</html>
